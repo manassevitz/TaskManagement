@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS tasks (
+  id SERIAL PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  description TEXT DEFAULT '',
+  status VARCHAR(20) NOT NULL DEFAULT 'open',
+  created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  in_progress_at TIMESTAMP NULL,
+  done_at TIMESTAMP NULL,
+  priority VARCHAR(10) NOT NULL DEFAULT 'green'
+);

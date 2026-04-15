@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Mission Control Tasks</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="container">
+      <header class="page-header">
+        <h1>Task Management</h1>
+        <p class="subtitle">Tablero de tareas con drag & drop</p>
+      </header>
+
+      <section class="layout">
+        <section class="board">
+          <article class="column">
+            <h2>Open</h2>
+            <div class="tasks" data-status="open" id="open"></div>
+          </article>
+          <article class="column">
+            <h2>In Progress</h2>
+            <div class="tasks" data-status="in_progress" id="in_progress"></div>
+          </article>
+          <article class="column">
+            <h2>Done</h2>
+            <div class="tasks" data-status="done" id="done"></div>
+          </article>
+        </section>
+      </section>
+
+      <section class="create-section">
+        <h2 class="create-heading">Nueva tarea</h2>
+        <form id="task-form" class="task-form">
+          <input id="title" type="text" placeholder="Titulo de la tarea" required minlength="2" />
+          <textarea id="description" placeholder="Descripcion (opcional)" rows="6"></textarea>
+          <button type="submit">Crear tarea</button>
+        </form>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
