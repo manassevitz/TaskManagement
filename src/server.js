@@ -8,6 +8,11 @@ const app = express();
 const port = Number(process.env.PORT || 3000);
 const validStatuses = new Set(["open", "in_progress", "done"]);
 const validPriorities = new Set(["green", "orange", "red"]);
+const sessionSecret = process.env.SESSION_SECRET || "dev-session-secret-change-me";
+
+if (process.env.NODE_ENV === "production" && !process.env.SESSION_SECRET) {
+  console.warn("SESSION_SECRET no esta definido en produccion; configura uno en Render.");
+}
 
 // Render/Heroku-style platforms terminate TLS at proxy level.
 app.set("trust proxy", 1);
@@ -15,14 +20,14 @@ app.set("trust proxy", 1);
 app.use(express.json());
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "dev-session-secret-change-me",
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
     proxy: true,
     cookie: {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: "auto",
       maxAge: 1000 * 60 * 60 * 24 * 7,
     },
   })

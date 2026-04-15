@@ -86,8 +86,20 @@ function setDeleteUserMessage(message, type = "error") {
   deleteUserMessage.classList.add(type === "success" ? "form-message--success" : "form-message--error");
 }
 
+async function handleUnauthorized(response) {
+  if (response.status === 401) {
+    setAuthUI(null);
+    setLoginError("Session expired. Please log in again.");
+    return true;
+  }
+  return false;
+}
+
 async function loadUsersForDelete() {
   const response = await fetch("/auth/users");
+  if (await handleUnauthorized(response)) {
+    throw new Error("No autenticado");
+  }
   if (!response.ok) {
     throw new Error("No se pudieron cargar los usuarios");
   }
@@ -175,6 +187,10 @@ function clearBoard() {
 
 async function loadTasks() {
   const response = await fetch("/api/tasks");
+  if (await handleUnauthorized(response)) return;
+  if (!response.ok) {
+    throw new Error("No se pudieron cargar las tareas");
+  }
   const tasks = await response.json();
   clearBoard();
   tasks.forEach((task) => {
@@ -229,6 +245,7 @@ async function createUser(event) {
     body: JSON.stringify({ username, password, role }),
   });
 
+  if (await handleUnauthorized(response)) return;
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
     setUserFormMessage(payload.error || "No se pudo crear el usuario.", "error");
@@ -249,6 +266,7 @@ async function deleteUser(event) {
   }
 
   const response = await fetch(`/auth/users/${userId}`, { method: "DELETE" });
+  if (await handleUnauthorized(response)) return;
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}));
     setDeleteUserMessage(payload.error || "No se pudo eliminar el usuario.", "error");
@@ -265,11 +283,15 @@ async function createTask(event) {
   const description = descriptionInput.value.trim();
   if (title.length < 2) return;
 
-  await fetch("/api/tasks", {
+  const response = await fetch("/api/tasks", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, description }),
   });
+  if (await handleUnauthorized(response)) return;
+  if (!response.ok) {
+    return;
+  }
 
   form.reset();
   await loadTasks();
@@ -281,6 +303,9 @@ async function updateTaskStatus(taskId, status) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
   });
+  if (await handleUnauthorized(response)) {
+    throw new Error("No autenticado");
+  }
   if (!response.ok) {
     throw new Error("No se pudo actualizar el estado");
   }
@@ -292,15 +317,20 @@ async function updateTaskPriority(taskId, priority) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ priority }),
   });
+  if (await handleUnauthorized(response)) {
+    throw new Error("No autenticado");
+  }
   if (!response.ok) {
     throw new Error("No se pudo actualizar la prioridad");
   }
 }
 
 async function deleteTask(taskId) {
-  await fetch(`/api/tasks/${taskId}`, {
+  const response = await fetch(`/api/tasks/${taskId}`, {
     method: "DELETE",
   });
+  if (await handleUnauthorized(response)) return;
+  if (!response.ok) return;
   await loadTasks();
 }
 
