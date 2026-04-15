@@ -1,3 +1,25 @@
+const appSection = document.getElementById("app-section");
+const loginSection = document.getElementById("login-section");
+const loginForm = document.getElementById("login-form");
+const loginUsernameInput = document.getElementById("login-username");
+const loginPasswordInput = document.getElementById("login-password");
+const loginError = document.getElementById("login-error");
+const sessionInfo = document.getElementById("session-info");
+const logoutButton = document.getElementById("logout-btn");
+const openUserModalButton = document.getElementById("open-user-modal-btn");
+const openDeleteUserModalButton = document.getElementById("open-delete-user-modal-btn");
+const userModal = document.getElementById("user-modal");
+const closeUserModalButton = document.getElementById("close-user-modal-btn");
+const userForm = document.getElementById("user-form");
+const userFormMessage = document.getElementById("user-form-message");
+const newUsernameInput = document.getElementById("new-username");
+const newPasswordInput = document.getElementById("new-password");
+const newRoleInput = document.getElementById("new-role");
+const deleteUserModal = document.getElementById("delete-user-modal");
+const closeDeleteUserModalButton = document.getElementById("close-delete-user-modal-btn");
+const deleteUserForm = document.getElementById("delete-user-form");
+const deleteUserSelect = document.getElementById("delete-user-select");
+const deleteUserMessage = document.getElementById("delete-user-message");
 const form = document.getElementById("task-form");
 const titleInput = document.getElementById("title");
 const descriptionInput = document.getElementById("description");
@@ -12,6 +34,71 @@ const priorityCycle = {
   orange: "red",
   red: "green",
 };
+let currentSession = null;
+
+function setUserModalOpen(open) {
+  userModal.classList.toggle("hidden", !open);
+  if (!open) {
+    setUserFormMessage("", "error");
+  }
+}
+
+function setDeleteUserModalOpen(open) {
+  deleteUserModal.classList.toggle("hidden", !open);
+  if (!open) {
+    setDeleteUserMessage("", "error");
+  }
+}
+
+function setLoginError(message) {
+  if (!message) {
+    loginError.textContent = "";
+    loginError.classList.add("hidden");
+    return;
+  }
+  loginError.textContent = message;
+  loginError.classList.remove("hidden");
+}
+
+function setUserFormMessage(message, type = "error") {
+  if (!message) {
+    userFormMessage.textContent = "";
+    userFormMessage.classList.add("hidden");
+    userFormMessage.classList.remove("form-message--error", "form-message--success");
+    return;
+  }
+  userFormMessage.textContent = message;
+  userFormMessage.classList.remove("hidden");
+  userFormMessage.classList.remove("form-message--error", "form-message--success");
+  userFormMessage.classList.add(type === "success" ? "form-message--success" : "form-message--error");
+}
+
+function setDeleteUserMessage(message, type = "error") {
+  if (!message) {
+    deleteUserMessage.textContent = "";
+    deleteUserMessage.classList.add("hidden");
+    deleteUserMessage.classList.remove("form-message--error", "form-message--success");
+    return;
+  }
+  deleteUserMessage.textContent = message;
+  deleteUserMessage.classList.remove("hidden");
+  deleteUserMessage.classList.remove("form-message--error", "form-message--success");
+  deleteUserMessage.classList.add(type === "success" ? "form-message--success" : "form-message--error");
+}
+
+async function loadUsersForDelete() {
+  const response = await fetch("/auth/users");
+  if (!response.ok) {
+    throw new Error("No se pudieron cargar los usuarios");
+  }
+  const users = await response.json();
+  const options = users
+    .filter((user) => user.id !== currentSession?.id)
+    .map((user) => `<option value="${user.id}">${user.username} (${user.role})</option>`)
+    .join("");
+
+  deleteUserSelect.innerHTML = `<option value="">Selecciona un usuario</option>${options}`;
+}
 
 function formatDate(dateString) {
   return new Date(dateString).toLocaleString("es-ES", {
@@ -21,6 +108,31 @@ function formatDate(dateString) {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function setAuthUI(session) {
+  currentSession = session;
+  const isLogged = Boolean(session);
+  loginSection.classList.toggle("hidden", isLogged);
+  appSection.classList.toggle("hidden", !isLogged);
+  if (!isLogged) {
+    sessionInfo.textContent = "";
+    openUserModalButton.classList.add("hidden");
+    openDeleteUserModalButton.classList.add("hidden");
+    setUserModalOpen(false);
+    setDeleteUserModalOpen(false);
+    clearBoard();
+    return;
+  }
+
+  sessionInfo.textContent = `Usuario: ${session.username} (${session.role})`;
+  const isAdmin = session.role === "admin";
+  openUserModalButton.classList.toggle("hidden", !isAdmin);
+  openDeleteUserModalButton.classList.toggle("hidden", !isAdmin);
+  if (!isAdmin) {
+    setUserModalOpen(false);
+    setDeleteUserModalOpen(false);
+  }
 }
 
 function createTaskCard(task) {
@@ -69,6 +181,82 @@ async function loadTasks() {
     const card = createTaskCard(task);
     columns[task.status]?.appendChild(card);
   });
+}
+
+async function getSession() {
+  const response = await fetch("/auth/me");
+  if (!response.ok) return null;
+  return response.json();
+}
+
+async function login(event) {
+  event.preventDefault();
+  setLoginError("");
+  const username = loginUsernameInput.value.trim();
+  const password = loginPasswordInput.value;
+
+  const response = await fetch("/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!response.ok) {
+    setLoginError("Usuario o clave incorrectos.");
+    return;
+  }
+
+  loginForm.reset();
+  const session = await response.json();
+  setAuthUI(session);
+  await loadTasks();
+}
+
+async function logout() {
+  await fetch("/auth/logout", { method: "POST" });
+  setAuthUI(null);
+}
+
+async function createUser(event) {
+  event.preventDefault();
+  setUserFormMessage("", "error");
+  const username = newUsernameInput.value.trim();
+  const password = newPasswordInput.value;
+  const role = newRoleInput.value;
+
+  const response = await fetch("/auth/users", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password, role }),
+  });
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    setUserFormMessage(payload.error || "No se pudo crear el usuario.", "error");
+    return;
+  }
+
+  userForm.reset();
+  setUserFormMessage("Usuario creado correctamente.", "success");
+}
+
+async function deleteUser(event) {
+  event.preventDefault();
+  setDeleteUserMessage("", "error");
+  const userId = Number(deleteUserSelect.value);
+  if (!Number.isInteger(userId) || userId <= 0) {
+    setDeleteUserMessage("Selecciona un usuario valido.", "error");
+    return;
+  }
+
+  const response = await fetch(`/auth/users/${userId}`, { method: "DELETE" });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    setDeleteUserMessage(payload.error || "No se pudo eliminar el usuario.", "error");
+    return;
+  }
+
+  setDeleteUserMessage("Usuario eliminado correctamente.", "success");
+  await loadUsersForDelete();
 }
 
 async function createTask(event) {
@@ -146,6 +334,38 @@ function setupDragAndDrop() {
 }
 
 form.addEventListener("submit", createTask);
+loginForm.addEventListener("submit", login);
+loginUsernameInput.addEventListener("input", () => setLoginError(""));
+loginPasswordInput.addEventListener("input", () => setLoginError(""));
+logoutButton.addEventListener("click", logout);
+openUserModalButton.addEventListener("click", () => setUserModalOpen(true));
+openDeleteUserModalButton.addEventListener("click", async () => {
+  try {
+    await loadUsersForDelete();
+    setDeleteUserModalOpen(true);
+  } catch (error) {
+    setDeleteUserMessage("No se pudo cargar la lista de usuarios.", "error");
+    setDeleteUserModalOpen(true);
+  }
+});
+closeUserModalButton.addEventListener("click", () => setUserModalOpen(false));
+closeDeleteUserModalButton.addEventListener("click", () => setDeleteUserModalOpen(false));
+newUsernameInput.addEventListener("input", () => setUserFormMessage("", "error"));
+newPasswordInput.addEventListener("input", () => setUserFormMessage("", "error"));
+newRoleInput.addEventListener("change", () => setUserFormMessage("", "error"));
+deleteUserSelect.addEventListener("change", () => setDeleteUserMessage("", "error"));
+userModal.addEventListener("click", (event) => {
+  if (event.target === userModal) {
+    setUserModalOpen(false);
+  }
+});
+deleteUserModal.addEventListener("click", (event) => {
+  if (event.target === deleteUserModal) {
+    setDeleteUserModalOpen(false);
+  }
+});
+userForm.addEventListener("submit", createUser);
+deleteUserForm.addEventListener("submit", deleteUser);
 document.addEventListener("click", async (event) => {
   const target = event.target;
   if (!(target instanceof HTMLElement)) return;
@@ -190,4 +410,13 @@ document.addEventListener("click", async (event) => {
   await deleteTask(taskId);
 });
 setupDragAndDrop();
-loadTasks();
+
+async function init() {
+  const session = await getSession();
+  setAuthUI(session);
+  if (session) {
+    await loadTasks();
+  }
+}
+
+init();

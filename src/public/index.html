@@ -10,35 +10,89 @@
     <main class="container">
       <header class="page-header">
         <h1>Task Management</h1>
-        <p class="subtitle">Tablero de tareas con drag & drop</p>
+        <p class="subtitle">Task board with drag & drop</p>
       </header>
 
-      <section class="layout">
-        <section class="board">
-          <article class="column">
-            <h2>Open</h2>
-            <div class="tasks" data-status="open" id="open"></div>
-          </article>
-          <article class="column">
-            <h2>In Progress</h2>
-            <div class="tasks" data-status="in_progress" id="in_progress"></div>
-          </article>
-          <article class="column">
-            <h2>Done</h2>
-            <div class="tasks" data-status="done" id="done"></div>
-          </article>
-        </section>
-      </section>
-
-      <section class="create-section">
-        <h2 class="create-heading">Nueva tarea</h2>
-        <form id="task-form" class="task-form">
-          <input id="title" type="text" placeholder="Titulo de la tarea" required minlength="2" />
-          <textarea id="description" placeholder="Descripcion (opcional)" rows="6"></textarea>
-          <button type="submit">Crear tarea</button>
+      <section id="login-section" class="auth-card">
+        <h2>Iniciar sesion</h2>
+        <form id="login-form" class="task-form">
+          <input id="login-username" type="text" placeholder="Usuario" required minlength="3" />
+          <input id="login-password" type="password" placeholder="Clave" required minlength="6" />
+          <p id="login-error" class="form-error hidden"></p>
+          <button type="submit">Entrar</button>
         </form>
       </section>
+
+      <section id="app-section" class="hidden">
+        <section class="user-bar">
+          <p id="session-info"></p>
+          <div class="user-actions">
+            <button id="open-user-modal-btn" class="hidden" type="button">Crear usuario</button>
+            <button id="open-delete-user-modal-btn" class="hidden" type="button">Eliminar usuario</button>
+            <button id="logout-btn" type="button">Cerrar sesion</button>
+          </div>
+        </section>
+
+        <section class="layout">
+          <section class="board">
+            <article class="column">
+              <h2>Open</h2>
+              <div class="tasks" data-status="open" id="open"></div>
+            </article>
+            <article class="column">
+              <h2>In Progress</h2>
+              <div class="tasks" data-status="in_progress" id="in_progress"></div>
+            </article>
+            <article class="column">
+              <h2>Done</h2>
+              <div class="tasks" data-status="done" id="done"></div>
+            </article>
+          </section>
+        </section>
+
+        <section class="create-section">
+          <h2 class="create-heading">Nueva tarea</h2>
+          <form id="task-form" class="task-form">
+            <input id="title" type="text" placeholder="Titulo de la tarea" required minlength="2" />
+            <textarea id="description" placeholder="Descripcion (opcional)" rows="6"></textarea>
+            <button type="submit">Crear tarea</button>
+          </form>
+        </section>
+      </section>
     </main>
+    <section id="user-modal" class="modal-overlay hidden">
+      <article class="modal-card">
+        <header class="modal-header">
+          <h2>Crear usuario (admin)</h2>
+          <button id="close-user-modal-btn" class="modal-close-btn" type="button">X</button>
+        </header>
+        <form id="user-form" class="task-form">
+          <input id="new-username" type="text" placeholder="Nuevo usuario" required minlength="3" />
+          <input id="new-password" type="password" placeholder="Clave temporal" required minlength="6" />
+          <select id="new-role">
+            <option value="user">user</option>
+            <option value="admin">admin</option>
+          </select>
+          <p id="user-form-message" class="form-message hidden"></p>
+          <button type="submit">Crear usuario</button>
+        </form>
+      </article>
+    </section>
+    <section id="delete-user-modal" class="modal-overlay hidden">
+      <article class="modal-card">
+        <header class="modal-header">
+          <h2>Eliminar usuario (admin)</h2>
+          <button id="close-delete-user-modal-btn" class="modal-close-btn" type="button">X</button>
+        </header>
+        <form id="delete-user-form" class="task-form">
+          <select id="delete-user-select" required>
+            <option value="">Selecciona un usuario</option>
+          </select>
+          <p id="delete-user-message" class="form-message hidden"></p>
+          <button class="danger-btn" type="submit">Eliminar usuario y tareas</button>
+        </form>
+      </article>
+    </section>
 
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
     <script src="./app.js"></script>
