@@ -9,12 +9,16 @@ const port = Number(process.env.PORT || 3000);
 const validStatuses = new Set(["open", "in_progress", "done"]);
 const validPriorities = new Set(["green", "orange", "red"]);
 
+// Render/Heroku-style platforms terminate TLS at proxy level.
+app.set("trust proxy", 1);
+
 app.use(express.json());
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "dev-session-secret-change-me",
     resave: false,
     saveUninitialized: false,
+    proxy: true,
     cookie: {
       httpOnly: true,
       sameSite: "lax",
