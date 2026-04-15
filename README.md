@@ -88,6 +88,12 @@ Agrega estas variables:
 - `POSTGRES_USER=<user de Neon>`
 - `POSTGRES_PASSWORD=<password de Neon>`
 - `POSTGRES_DB=<database de Neon>`
+- `POSTGRES_SSL=true`
+- `SESSION_SECRET=<una clave larga y unica>`
+
+Opcional (recomendado para Neon), en lugar de las variables `POSTGRES_*`:
+
+- `DATABASE_URL=postgresql://...?...sslmode=require`
 
 ### 4) Deploy
 
